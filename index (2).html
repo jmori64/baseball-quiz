@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>野球ルール模擬試験（実戦編）</title>
+<style>
+  :root{
+    --navy:#0b1d33;
+    --navy2:#122844;
+    --chalk:#f2f0e6;
+    --gold:#d9a441;
+    --green:#2f8f5b;
+    --red:#c1453a;
+    --line:#24405f;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background: radial-gradient(ellipse at top, #16304f 0%, var(--navy) 60%);
+    color:var(--chalk);
+    font-family: "Hiragino Sans", "Yu Gothic", "Noto Sans JP", sans-serif;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    padding:24px 14px 60px;
+  }
+  .app{ width:100%; max-width:480px; }
+  .scoreboard{
+    background: linear-gradient(180deg, #081726, #0e2036);
+    border:2px solid var(--line);
+    border-radius:10px;
+    padding:14px 16px;
+    margin-bottom:18px;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.02) inset, 0 8px 24px rgba(0,0,0,0.4);
+  }
+  .scoreboard-title{
+    font-size:11px; letter-spacing:3px; color:var(--gold);
+    text-transform:uppercase; margin-bottom:2px; font-weight:700;
+  }
+  .scoreboard-sub{
+    font-size:10.5px; color:#7f95ac; margin-bottom:10px;
+  }
+  .score-row{ display:flex; justify-content:space-between; align-items:center; font-variant-numeric: tabular-nums; }
+  .score-cell{ text-align:center; flex:1; }
+  .score-label{ font-size:10px; color:#8fa5bd; letter-spacing:1px; margin-bottom:2px; }
+  .score-num{ font-size:26px; font-weight:800; font-family:"Courier New", monospace; color:var(--chalk); letter-spacing:1px; }
+  .score-num.out{color:var(--red);}
+  .score-num.run{color:var(--green);}
+  .progress-track{ margin-top:12px; height:6px; background:#0a1a2c; border-radius:4px; overflow:hidden; border:1px solid var(--line); }
+  .progress-fill{ height:100%; background: linear-gradient(90deg, var(--gold), #f2c877); width:0%; transition:width .35s ease; }
+  .card{
+    background: var(--navy2); border:1px solid var(--line); border-radius:14px;
+    padding:22px 20px 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+  }
+  .qtag{
+    display:inline-block; font-size:10.5px; color:#0b1d33; background:var(--gold);
+    padding:3px 8px; border-radius:5px; font-weight:800; letter-spacing:1px; margin-bottom:10px;
+  }
+  .qnum{ font-size:12px; color:var(--gold); letter-spacing:2px; font-weight:700; margin-bottom:6px; }
+  .qtext{ font-size:16px; line-height:1.65; font-weight:700; margin-bottom:18px; white-space:pre-line; }
+  .choices{ display:flex; flex-direction:column; gap:10px; }
+  .choice{
+    background:#0e2238; border:1px solid var(--line); color:var(--chalk);
+    padding:13px 14px; border-radius:9px; font-size:14.5px; text-align:left;
+    cursor:pointer; transition: all .15s ease; line-height:1.5;
+  }
+  .choice:active{transform:scale(0.98);}
+  .choice.correct{ background: rgba(47,143,91,0.25); border-color:var(--green); }
+  .choice.wrong{ background: rgba(193,69,58,0.25); border-color:var(--red); }
+  .choice.disabled{ pointer-events:none; opacity:0.65; }
+  .choice.correct, .choice.wrong{opacity:1;}
+  .explain{
+    margin-top:16px; padding:14px 15px; background:#0a1a2c; border-left:3px solid var(--gold);
+    border-radius:6px; font-size:13.5px; line-height:1.75; color:#dfe6ee; display:none; white-space:pre-line;
+  }
+  .explain.show{display:block;}
+  .nextbtn{
+    margin-top:16px; width:100%; padding:13px; background:var(--gold); color:#0b1d33;
+    border:none; border-radius:9px; font-size:15px; font-weight:800; letter-spacing:1px;
+    cursor:pointer; display:none;
+  }
+  .nextbtn.show{display:block;}
+  .startcard, .resultcard{ text-align:center; }
+  .startcard h1{ font-size:20px; margin:6px 0 8px; color:var(--chalk); }
+  .startcard p{ color:#9fb2c6; font-size:13.5px; line-height:1.75; margin-bottom:22px; text-align:left; }
+  .startcard p b{color:var(--chalk);}
+  .bigbtn{
+    width:100%; padding:15px; background:var(--gold); color:#0b1d33; border:none;
+    border-radius:10px; font-size:16px; font-weight:800; letter-spacing:1px; cursor:pointer;
+  }
+  .resultcard h2{ font-size:15px; color:var(--gold); letter-spacing:2px; margin-bottom:4px; }
+  .resultbig{ font-size:44px; font-weight:900; font-family:"Courier New", monospace; margin:8px 0 4px; }
+  .resultsub{ color:#9fb2c6; font-size:13px; margin-bottom:18px; }
+  .comment{
+    background:#0a1a2c; border:1px solid var(--line); border-radius:10px; padding:16px;
+    font-size:14px; line-height:1.8; text-align:left; margin-bottom:18px;
+  }
+  .hidden{display:none;}
+  .missedlist{ text-align:left; font-size:13px; line-height:1.8; color:#c9d5e2; margin-top:4px; padding-left:18px;}
+  .missedlist li{margin-bottom:10px;}
+  .missedlist .mq{font-weight:700; color:var(--chalk);}
+  .footnote{ font-size:11px; color:#6f859c; margin-top:16px; text-align:center; line-height:1.6; }
+  .catwrap{ text-align:left; margin-bottom:20px; }
+  .catwrap-title{ font-size:12px; color:var(--gold); letter-spacing:1px; margin-bottom:10px; font-weight:700; }
+  .catrow{ margin-bottom:11px; }
+  .catrow-top{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px; }
+  .catrow-name{ font-size:13.5px; color:var(--chalk); font-weight:700; }
+  .catrow-nums{ font-size:12.5px; color:#9fb2c6; font-variant-numeric: tabular-nums; white-space:nowrap; }
+  .catrow-nums b{ color:var(--chalk); }
+  .catbar-track{ height:8px; background:#0a1a2c; border-radius:5px; overflow:hidden; border:1px solid var(--line); }
+  .catbar-fill{ height:100%; border-radius:5px; transition:width .4s ease; }
+  .catbar-fill.good{ background: linear-gradient(90deg, #2f8f5b, #57c586); }
+  .catbar-fill.mid{ background: linear-gradient(90deg, var(--gold), #f2c877); }
+  .catbar-fill.bad{ background: linear-gradient(90deg, var(--red), #e06d61); }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <div class="scoreboard">
+    <div class="scoreboard-title">野球ルール模擬試験</div>
+    <div class="scoreboard-sub">実戦編：状況判断・応用ルール</div>
+    <div class="score-row">
+      <div class="score-cell">
+        <div class="score-label">問題</div>
+        <div class="score-num" id="qcount">0/15</div>
+      </div>
+      <div class="score-cell">
+        <div class="score-label">正解</div>
+        <div class="score-num run" id="runcount">0</div>
+      </div>
+      <div class="score-cell">
+        <div class="score-label">アウト</div>
+        <div class="score-num out" id="outcount">0</div>
+      </div>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+  </div>
+
+  <div class="card startcard" id="startScreen">
+    <h1>実戦ルール・状況判断テスト</h1>
+    <p>
+      インフィールドフライ、タッチアップ、振り逃げ、フェア/ファウル判定、挟殺中の得点、ランナー同塁など、<b>試合の中で実際に迷いやすい応用ルール</b>を出題します。<br><br>
+      全15問。答えを選ぶとすぐに解説が出ます。<br>
+      解き終わると、正解率と間違えた問題の一覧が表示されます。
+    </p>
+    <button class="bigbtn" id="startBtn">試験を始める</button>
+  </div>
+
+  <div class="card hidden" id="quizScreen">
+    <div class="qtag" id="qtag"></div>
+    <div class="qnum" id="qnumLabel">Q1</div>
+    <div class="qtext" id="qtext"></div>
+    <div class="choices" id="choices"></div>
+    <div class="explain" id="explain"></div>
+    <button class="nextbtn" id="nextBtn">次の問題へ</button>
+  </div>
+
+  <div class="card resultcard hidden" id="resultScreen">
+    <h2>RESULT</h2>
+    <div class="resultbig" id="finalScore">0/15</div>
+    <div class="resultsub">正解率 <span id="finalPct">0</span>%</div>
+    <div class="comment" id="finalComment"></div>
+    <div id="categoryWrap"></div>
+    <div id="missedWrap"></div>
+    <button class="bigbtn" id="retryBtn">もう一度挑戦する</button>
+  </div>
+
+  <div class="footnote">※ 一般的な硬式・軟式野球規則の考え方に基づく解説です。大会や年代（学童野球）によって細部の運用が異なる場合があります。</div>
+
+</div>
+
+<script>
+/*
+  ここに問題を追加していけば、今後の更新にそのまま対応できます。
+  1問 = { tag: 分類, q: 問題文, choices: [選択肢4つ], answer: 正解のインデックス(0始まり), exp: 解説 }
+*/
+const questions = [
+  {
+    tag: "フェア・ファウルの判定①",
+    category: "フェア・ファウルの判定",
+    q: "打球が転がって一塁ベース、または三塁ベースに当たりました。判定はどうなりますか？",
+    choices: [
+      "フェア。ベース自体がフェア地域に含まれるため",
+      "ベースに当たった後、転がっていった方向で決まる",
+      "ファウル。ベースは地域の境目にあたるため",
+      "打球が最後に止まった場所で決まる"
+    ],
+    answer: 0,
+    exp: "一塁・三塁のベース（ベースバッグ）は、そのすべてがフェア地域に含まれるものとして扱われます。そのため打球がベースに触れれば、その後どちらの方向に転がっても関係なく『フェア』の判定になります。「際どいのでベースのどちら側に当たったかで決まる」と誤解されがちですが、ベースに触れた時点で自動的にフェアです。"
+  },
+  {
+    tag: "フェア・ファウルの判定②",
+    category: "フェア・ファウルの判定",
+    q: "ファウル地域を転がっていた打球が、一塁の手前でフェア地域へ切れ込み、野手が捕球しました。判定はどうなりますか？",
+    choices: [
+      "ファウル。最初にファウル地域を通っていたため",
+      "ファウル。一度ファウル地域を通った打球は戻せないため",
+      "フェア。一塁を通過する前にフェア地域へ入り、フェア地域内でプレイが行われたため",
+      "打球が最後に止まった場所で決まる"
+    ],
+    answer: 2,
+    exp: "一塁・三塁を通過するまでの打球は、途中でファウル地域を通っていても判定は確定しません。決まるのは、その打球が止まった位置、または野手が触れた位置です。今回はフェア地域へ切れ込んだ後にフェア地域で捕球されているので、この打球はフェアになります。なお一塁・三塁を通過した後は、通過した瞬間の位置で判定が確定し、その後どちらへ転がっても変わりません。"
+  },
+  {
+    tag: "タッチアップの基本",
+    category: "タッチアップ",
+    q: "タッチアップ（リタッチ）は、どんなときに行うプレーですか？",
+    choices: [
+      "打球がフェア地域に落ちた後、塁を離れて進塁するとき",
+      "ゴロが内野を抜けた後、塁を離れて進塁するとき",
+      "四球で一塁に進んだ走者が、そのまま二塁を狙うとき",
+      "フライが野手に捕球された後、塁に触れてから次の塁を狙うとき"
+    ],
+    answer: 3,
+    exp: "タッチアップは『正規に捕球された飛球（フライ・ライナー）』に対してのみ行うプレーです。捕球される前に塁を離れると、後で野手にアピールされてアウトになる可能性があります（アピールプレー）。"
+  },
+  {
+    tag: "タッチアップの開始タイミング",
+    category: "タッチアップ",
+    q: "外野へフライが上がりました。走者がタッチアップでスタートしてよいのは、いつですか？",
+    choices: [
+      "打球が最高点に達した瞬間",
+      "野手がボールに最初に触れた瞬間",
+      "野手がグラブの中でボールを完全に握った瞬間",
+      "野手が捕球し、内野へ返球した瞬間"
+    ],
+    answer: 1,
+    exp: "走者がスタートしてよいのは『野手が最初にボールに触れた瞬間』です。その後グラブの中でボールが動いていても、しっかり握り込む前でも、最初に触れた時点でスタートは合法です。これより早く離塁すると、アピールプレーでアウトになる可能性があります。"
+  },
+  {
+    tag: "同塁のランナー",
+    category: "同塁のランナー",
+    q: "二塁走者が長打と思い込んで走り込んだ結果、三塁ベース上に「三塁走者」と「二塁走者」の2人が同時にいる状態になりました。ここでタッチをされると、アウトになるのはどちらですか？",
+    choices: [
+      "二塁走者",
+      "三塁走者",
+      "三塁走者・二塁走者の両方が同時にアウトになる",
+      "守備側が指名した方の走者がアウトになる"
+    ],
+    answer: 0,
+    exp: "同じ塁に2人の走者がいる場合、優先権があるのは『先にその塁に触れた方』ではありません。走者には進塁順があり、もともと三塁にいた走者は、二塁から来た走者よりも先の塁を占有する権利（先位走者としての権利）を持っています。この優先関係は、その瞬間にどちらが先にベースへ触れたかとは関係なく決まります。そのため、タッチされてアウトになるのは、後から追いついてきた二塁走者の方です。"
+  },
+  {
+    tag: "振り逃げ",
+    category: "振り逃げ",
+    q: "三振した打者が一塁へ走れる「振り逃げ」が成立するのは、どんなときですか？",
+    choices: [
+      "三振すれば、いつでも成立する",
+      "捕手が正規に捕球できず、かつノーアウトのとき",
+      "捕手が正規に捕球できず、かつ一塁が空いているか2アウトのとき",
+      "打者がバントを試みて三振したとき"
+    ],
+    answer: 2,
+    exp: "振り逃げが成立する条件は2つそろう必要があります。①捕手が投球を正規に捕球できていないこと、②一塁に走者がいない、または2アウトであること（一塁に走者がいて2アウト未満の場合は、通常の三振と同じくその場でアウトになります）。"
+  },
+  {
+    tag: "挟殺と得点",
+    category: "挟殺と得点",
+    q: "三塁走者が本塁を踏んだ後、一塁走者が挟殺（ランダウン）でタッチアウトになり、3アウトになりました。得点は認められますか？",
+    choices: [
+      "認められない。アウトが成立した時点で、そのプレーの得点は取り消される",
+      "認められない。3アウト目が絡む場面では、常に得点は無効になる",
+      "審判がその都度、認めるかどうかを判断する",
+      "認められる。タッチアウトより先に本塁を踏んでいるため"
+    ],
+    answer: 3,
+    exp: "挟殺（ランダウン）でのアウトは、走者に『タッチ』してとるアウトです（進塁義務がある走者に対し、ベースを踏むだけで成立する『フォースアウト』とは仕組みが違います）。タッチアウトの場合は、そのアウトが成立するより先に別の走者が本塁を踏んでいれば得点が認められます。これを『タイムプレー』と呼びます。\n※ 例外として、その挟殺に巻き込まれた走者にまだ進塁義務（フォース）が残っていた場合は『フォースアウト』の扱いになり、たとえ本塁を先に踏んでいても得点は認められません。"
+  },
+  {
+    tag: "インフィールドフライ",
+    category: "インフィールドフライ",
+    q: "ノーアウトまたは1アウトで、走者は一・二塁（または満塁）。内野手が普通に捕れるフライが上がりました。判定はどうなりますか？",
+    choices: [
+      "内野手が実際に捕球しなければ、アウトにはならない",
+      "捕っても落としても、その時点で打者は自動的にアウトになる",
+      "バント飛球と同じ扱いになる",
+      "打者だけでなく、走者も全員アウトになる"
+    ],
+    answer: 1,
+    exp: "インフィールドフライは、守備側がわざと落として併殺（ダブルプレー）を狙うのを防ぐためのルールです。宣告された瞬間に打者は自動的にアウトになり、走者は無理に進塁する必要はありません。ライナーやバント飛球には適用されません。"
+  },
+  {
+    tag: "インフィールドフライ後の対応①",
+    category: "インフィールドフライ",
+    q: "インフィールドフライが宣告され、ボールは野手に捕球されました。塁上の走者はどうすべきですか？",
+    choices: [
+      "通常のフライと同じく、タッチアップしてから進塁する",
+      "宣告されているので、自由に進塁してよい",
+      "走者も自動的にアウトになる",
+      "その塁から動いてはいけない"
+    ],
+    answer: 0,
+    exp: "インフィールドフライは『打者だけ』が自動アウトになるルールで、ボール自体の扱いは変わりません。捕球された以上、通常のフライと同じくタッチアップが必要です。"
+  },
+  {
+    tag: "インフィールドフライ後の対応②",
+    category: "インフィールドフライ",
+    q: "インフィールドフライが宣告された後、野手が落球しました。走者が進塁するのに、タッチアップは必要ですか？",
+    choices: [
+      "必要。フライである以上、必ずタッチアップする",
+      "不要。走者は全員、自動的に次の塁へ進める",
+      "不要。捕球されていないので、普通の打球と同じ扱いになる",
+      "審判の指示を待ってから判断する"
+    ],
+    answer: 2,
+    exp: "タッチアップが必要なのは『捕球された』ときだけです。未捕球なら普通の生きた打球と同じ扱いになります。"
+  },
+  {
+    tag: "インフィールドフライ後の対応③",
+    category: "インフィールドフライ",
+    q: "インフィールドフライが宣告された後、落球したボールが転がっています。一塁走者に、二塁へ進む義務（フォース）はありますか？",
+    choices: [
+      "ある。通常どおり、二塁へ進む義務がある",
+      "ある。落球した場合に限って発生する",
+      "義務が三塁への進塁に切り替わる",
+      "ない。打者がすでにアウトになっているため"
+    ],
+    answer: 3,
+    exp: "打者がインフィールドフライで既にアウトのため、後続によるフォースは発生しません。一塁走者はその場に留まってもフォースアウトにはなりません（進みたければ自分の判断とリスクで進塁できます）。"
+  },
+  {
+    tag: "インフィールドフライ後の対応④",
+    category: "インフィールドフライ",
+    q: "インフィールドフライが宣告された瞬間、打者（バッターランナー）はどうすべきですか？",
+    choices: [
+      "一塁まで全力疾走しないと、アピールでアウトになる",
+      "アウトが確定しているので、一塁へ走る義務はない",
+      "一塁を回って、二塁を目指さなければならない",
+      "その場に立ち止まらなければならない"
+    ],
+    answer: 1,
+    exp: "宣告と同時に打者はアウトが確定します。走る義務はありませんが、味方走者のために走り続けても問題はありません。"
+  },
+  {
+    tag: "インフィールドフライ後の対応⑤（応用）",
+    category: "インフィールドフライ",
+    q: "インフィールドフライ宣告後、落球したボールが転がる間に一塁走者が二塁へ走りました。野手が二塁へ送球し、走者より先にボールが届きました。判定はどうなりますか？",
+    choices: [
+      "アウトにならない。フォースが消えているので、タッチが必要",
+      "フォースアウトが成立する",
+      "アウトになる。落球した打球はすべてフォース扱いになるため",
+      "打者と合わせて、ダブルプレーが成立する"
+    ],
+    answer: 0,
+    exp: "打者がインフィールドフライで既にアウトのため、後続のフォースは解除されています。二塁でアウトにするには送球を受けた野手がベースを踏むだけでなく、走者本人に直接タッチする必要があります。"
+  },
+  {
+    tag: "状況判断（一塁手）",
+    category: "状況判断",
+    q: "ノーアウト・ランナー一塁。バントが小フライになり、投手が落球。ボールはフェア地域に転がっています。一塁走者は捕られると思い込み、一塁ベース上に残ったままです。投手からあなた（一塁手）へ送球が来ました。まず何をしますか？",
+    choices: [
+      "ベースを踏んで、打者走者だけをアウトにする",
+      "インフィールドフライなので、何もせず待つ",
+      "ベース上の走者にタッチし、続けてベースを踏んで打者走者もアウトにする",
+      "本塁へ送球し直す"
+    ],
+    answer: 2,
+    exp: "バント打球が上がっても、バント（送りバントなどの意図的なバント）はインフィールドフライの対象外です。つまり打者は自動アウトになっておらず、落球した以上このボールは『生きた打球』として扱われます。この場面では、打者が一塁へ進む権利を持つため、もともと一塁にいた走者は二塁へ進む義務（フォース）を負います。ところがこの走者は『捕られる』と思い込み、二塁へ進まず一塁ベースにとどまってしまっています。\n一塁手であるあなたはすでにボールを持っているので、まず目の前にいるこの走者に直接タッチしてアウトを取れます。そのうえで、打者走者はまだ一塁に到達していないはずなので、続けて一塁ベースを踏めばフォースアウトが成立し、1つの送球で併殺（ダブルプレー）にできます。ベースを踏むだけで済ませてしまうと、目の前にいる走者への確実なアウトを取り逃すことになります。"
+  },
+  {
+    tag: "状況判断（アピールプレー）",
+    category: "状況判断",
+    q: "1アウト、ランナー一塁・三塁。打者がレフトへフライを打ち、レフトが正規に捕球しました（これで2アウト）。三塁走者はタッチアップをせずに離塁し、そのまま本塁を踏んで得点しました。同時に一塁走者は二塁付近まで大きく飛び出していました。レフトはこれを見て一塁へ送球し、一塁でアウトを取って3アウト目にしました。この結果、得点は認められてしまいます。得点を防ぐために、この後チームはどういう対応をすべきですか？",
+    choices: [
+      "一塁でアウトを取った時点で3アウトが成立しているので、もう何もできない",
+      "審判に抗議し、得点の判定だけをやり直してもらう",
+      "次の攻撃回で追加点を取ることを狙う",
+      "守備側の選手がフェア地域（守備位置）を離れる前に、三塁へ送球して三塁走者のタッチアップ違反をアピールし、3アウト目を付け替える"
+    ],
+    answer: 3,
+    exp: "3アウトが記録された後でも、守備側の選手たちがフェア地域（守備位置）を離れる前であれば、まだアピールプレーを行うことができます。今回の得点を取り消せるのは、その得点の原因となった三塁走者自身の反則（タッチアップをせずに離塁したこと）をアピールし、その走者を3アウト目として記録し直した場合だけです。\n一塁でのアウトは、すでに3アウト目として扱われていても、三塁走者の得点そのものとは無関係な反則によるものなので、そのままでは得点を取り消せません。守備側が速やかに三塁へ送球してタッチアップ違反をアピールすれば、3アウト目をこの三塁走者の反則に付け替えることができ、得点を取り消せます。"
+  }
+];
+
+let current = 0;
+let runs = 0;
+let outs = 0;
+let missed = [];
+let answeredCorrect = [];
+
+const startScreen = document.getElementById('startScreen');
+const quizScreen = document.getElementById('quizScreen');
+const resultScreen = document.getElementById('resultScreen');
+const qtagEl = document.getElementById('qtag');
+const qnumLabel = document.getElementById('qnumLabel');
+const qtext = document.getElementById('qtext');
+const choicesEl = document.getElementById('choices');
+const explainEl = document.getElementById('explain');
+const nextBtn = document.getElementById('nextBtn');
+const qcountEl = document.getElementById('qcount');
+const runcountEl = document.getElementById('runcount');
+const outcountEl = document.getElementById('outcount');
+const progressFill = document.getElementById('progressFill');
+
+document.getElementById('startBtn').addEventListener('click', () => {
+  startScreen.classList.add('hidden');
+  quizScreen.classList.remove('hidden');
+  renderQuestion();
+});
+
+document.getElementById('retryBtn').addEventListener('click', () => {
+  current = 0; runs = 0; outs = 0; missed = []; answeredCorrect = [];
+  updateScoreboard();
+  resultScreen.classList.add('hidden');
+  quizScreen.classList.remove('hidden');
+  renderQuestion();
+});
+
+nextBtn.addEventListener('click', () => {
+  current++;
+  if (current >= questions.length) {
+    showResult();
+  } else {
+    renderQuestion();
+  }
+});
+
+function updateScoreboard(){
+  const displayNum = Math.min(current + 1, questions.length);
+  qcountEl.textContent = displayNum + "/" + questions.length;
+  runcountEl.textContent = runs;
+  outcountEl.textContent = outs;
+  progressFill.style.width = (displayNum / questions.length * 100) + "%";
+}
+
+function renderQuestion(){
+  const item = questions[current];
+  qtagEl.textContent = item.tag;
+  qnumLabel.textContent = "Q" + (current + 1);
+  qtext.textContent = item.q;
+  choicesEl.innerHTML = "";
+  explainEl.classList.remove('show');
+  explainEl.textContent = "";
+  nextBtn.classList.remove('show');
+  updateScoreboard();
+
+  item.choices.forEach((choiceText, idx) => {
+    const btn = document.createElement('button');
+    btn.className = 'choice';
+    btn.textContent = String.fromCharCode(9312 + idx) + " " + choiceText;
+    btn.addEventListener('click', () => selectAnswer(idx));
+    choicesEl.appendChild(btn);
+  });
+}
+
+function selectAnswer(idx){
+  const item = questions[current];
+  const buttons = choicesEl.querySelectorAll('.choice');
+  buttons.forEach(b => b.classList.add('disabled'));
+
+  if (idx === item.answer) {
+    buttons[idx].classList.add('correct');
+    runs++;
+    answeredCorrect[current] = true;
+  } else {
+    buttons[idx].classList.add('wrong');
+    buttons[item.answer].classList.add('correct');
+    outs++;
+    missed.push(item);
+    answeredCorrect[current] = false;
+  }
+
+  explainEl.textContent = item.exp;
+  explainEl.classList.add('show');
+  nextBtn.classList.add('show');
+  nextBtn.textContent = (current === questions.length - 1) ? "結果を見る" : "次の問題へ";
+  updateScoreboard();
+}
+
+function showResult(){
+  quizScreen.classList.add('hidden');
+  resultScreen.classList.remove('hidden');
+  const total = questions.length;
+  const pct = Math.round(runs / total * 100);
+  document.getElementById('finalScore').textContent = runs + "/" + total;
+  document.getElementById('finalPct').textContent = pct;
+
+  let comment = "";
+  if (pct >= 90) {
+    comment = "応用ルールまでしっかり理解できています。当日はこのレベルの状況判断問題が出ても対応できそうです。";
+  } else if (pct >= 70) {
+    comment = "基本は理解できています。間違えた問題の解説を読み返して、あいまいな部分をなくしておきましょう。";
+  } else {
+    comment = "応用ルールの再確認がおすすめです。間違えた問題を中心に、実際の映像やルールブックと照らし合わせて復習してみてください。";
+  }
+  document.getElementById('finalComment').textContent = comment;
+
+  // カテゴリー別の集計（出題順に登場した順番でグループ化）
+  const catOrder = [];
+  const catStats = {};
+  questions.forEach((q, i) => {
+    const cat = q.category || q.tag;
+    if (!catStats[cat]) {
+      catStats[cat] = { correct: 0, total: 0 };
+      catOrder.push(cat);
+    }
+    catStats[cat].total++;
+    if (answeredCorrect[i]) catStats[cat].correct++;
+  });
+
+  const categoryWrap = document.getElementById('categoryWrap');
+  categoryWrap.innerHTML = "";
+  const catBox = document.createElement('div');
+  catBox.className = 'catwrap';
+
+  const catTitle = document.createElement('div');
+  catTitle.className = 'catwrap-title';
+  catTitle.textContent = "カテゴリー別の正解数";
+  catBox.appendChild(catTitle);
+
+  catOrder.forEach(cat => {
+    const s = catStats[cat];
+    const catPct = Math.round(s.correct / s.total * 100);
+
+    const row = document.createElement('div');
+    row.className = 'catrow';
+
+    const top = document.createElement('div');
+    top.className = 'catrow-top';
+
+    const name = document.createElement('div');
+    name.className = 'catrow-name';
+    name.textContent = cat;
+
+    const nums = document.createElement('div');
+    nums.className = 'catrow-nums';
+    nums.innerHTML = "<b>" + s.correct + "/" + s.total + "</b>　" + catPct + "%";
+
+    top.appendChild(name);
+    top.appendChild(nums);
+
+    const track = document.createElement('div');
+    track.className = 'catbar-track';
+    const fill = document.createElement('div');
+    fill.className = 'catbar-fill ' + (catPct >= 80 ? 'good' : catPct >= 50 ? 'mid' : 'bad');
+    fill.style.width = catPct + '%';
+    track.appendChild(fill);
+
+    row.appendChild(top);
+    row.appendChild(track);
+    catBox.appendChild(row);
+  });
+
+  categoryWrap.appendChild(catBox);
+
+  const missedWrap = document.getElementById('missedWrap');
+  missedWrap.innerHTML = "";
+  if (missed.length > 0) {
+    const label = document.createElement('div');
+    label.style.textAlign = 'left';
+    label.style.fontSize = '12px';
+    label.style.color = '#d9a441';
+    label.style.letterSpacing = '1px';
+    label.style.marginBottom = '8px';
+    label.textContent = "間違えた問題（" + missed.length + "問）";
+    missedWrap.appendChild(label);
+
+    const list = document.createElement('ul');
+    list.className = 'missedlist';
+    missed.forEach(m => {
+      const li = document.createElement('li');
+      const q = document.createElement('div');
+      q.className = 'mq';
+      q.textContent = "【" + m.tag + "】";
+      const t = document.createElement('div');
+      t.textContent = m.q;
+      li.appendChild(q);
+      li.appendChild(t);
+      list.appendChild(li);
+    });
+    missedWrap.appendChild(list);
+  } else {
+    const p = document.createElement('div');
+    p.style.textAlign = 'left';
+    p.style.fontSize = '13px';
+    p.style.color = '#9fb2c6';
+    p.textContent = "全問正解でした！";
+    missedWrap.appendChild(p);
+  }
+}
+</script>
+</body>
+</html>
